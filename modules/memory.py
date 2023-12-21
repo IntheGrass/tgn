@@ -30,7 +30,7 @@ class Memory(nn.Module):
     self.last_update = nn.Parameter(torch.zeros(self.n_nodes).to(self.device),
                                     requires_grad=False)
 
-    self.messages = defaultdict(list)
+    self.messages = defaultdict(list)  # 每个key都会有一个默认的list值，即空list[]
 
   def store_raw_messages(self, nodes, node_id_to_messages):
     for node in nodes:

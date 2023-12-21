@@ -192,6 +192,7 @@ for i in range(args.n_runs):
 
     logger.info('start {} epoch'.format(epoch))
     for k in range(0, num_batch, args.backprop_every):
+        # 调整每backprop_every轮batch后才进行反向传播
       loss = 0
       optimizer.zero_grad()
 
@@ -210,7 +211,7 @@ for i in range(args.n_runs):
         timestamps_batch = train_data.timestamps[start_idx:end_idx]
 
         size = len(sources_batch)
-        _, negatives_batch = train_rand_sampler.sample(size)
+        _, negatives_batch = train_rand_sampler.sample(size)  # 纯随机地选取源节点与目标节点
 
         with torch.no_grad():
           pos_label = torch.ones(size, dtype=torch.float, device=device)
@@ -231,7 +232,7 @@ for i in range(args.n_runs):
       # Detach memory after 'args.backprop_every' number of batches so we don't backpropagate to
       # the start of time
       if USE_MEMORY:
-        tgn.memory.detach_memory()
+        tgn.memory.detach_memory()  # 我猜测是由于memory和message更新，所以每一轮都要重新detach
 
     epoch_time = time.time() - start_epoch
     epoch_times.append(epoch_time)

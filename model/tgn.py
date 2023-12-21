@@ -133,7 +133,7 @@ class TGN(torch.nn.Module):
       ### and the time for which we want to compute the embedding of a node
       source_time_diffs = torch.LongTensor(edge_times).to(self.device) - last_update[
         source_nodes].long()
-      source_time_diffs = (source_time_diffs - self.mean_time_shift_src) / self.std_time_shift_src
+      source_time_diffs = (source_time_diffs - self.mean_time_shift_src) / self.std_time_shift_src  # Z-score标准化/零均值单位方差标准化
       destination_time_diffs = torch.LongTensor(edge_times).to(self.device) - last_update[
         destination_nodes].long()
       destination_time_diffs = (destination_time_diffs - self.mean_time_shift_dst) / self.std_time_shift_dst
@@ -185,7 +185,7 @@ class TGN(torch.nn.Module):
         self.update_memory(unique_sources, source_id_to_messages)
         self.update_memory(unique_destinations, destination_id_to_messages)
 
-      if self.dyrep:
+      if self.dyrep:  # 该模式下，直接使用memory中的信息作为嵌入向量
         source_node_embedding = memory[source_nodes]
         destination_node_embedding = memory[destination_nodes]
         negative_node_embedding = memory[negative_nodes]
@@ -212,7 +212,7 @@ class TGN(torch.nn.Module):
 
     score = self.affinity_score(torch.cat([source_node_embedding, source_node_embedding], dim=0),
                                 torch.cat([destination_node_embedding,
-                                           negative_node_embedding])).squeeze(dim=0)
+                                           negative_node_embedding])).squeeze(dim=0)  # 合并计算评分
     pos_score = score[:n_samples]
     neg_score = score[n_samples:]
 
@@ -223,7 +223,7 @@ class TGN(torch.nn.Module):
     unique_nodes, unique_messages, unique_timestamps = \
       self.message_aggregator.aggregate(
         nodes,
-        messages)
+        messages)  # 聚合nodes中的所有消息，默认聚合方式为保留最新消息，返回的unique_nodes包含了实际聚合节点（即消息不为空的节点）
 
     if len(unique_nodes) > 0:
       unique_messages = self.message_function.compute_message(unique_messages)
@@ -237,7 +237,7 @@ class TGN(torch.nn.Module):
     unique_nodes, unique_messages, unique_timestamps = \
       self.message_aggregator.aggregate(
         nodes,
-        messages)
+        messages)  # 聚合同一节点的消息，默认取最新值
 
     if len(unique_nodes) > 0:
       unique_messages = self.message_function.compute_message(unique_messages)
@@ -249,14 +249,14 @@ class TGN(torch.nn.Module):
     return updated_memory, updated_last_update
 
   def get_raw_messages(self, source_nodes, source_node_embedding, destination_nodes,
-                       destination_node_embedding, edge_times, edge_idxs):
+                       destination_node_embedding, edge_times, edge_idxs):  # 该方法用于生成消息
     edge_times = torch.from_numpy(edge_times).float().to(self.device)
     edge_features = self.edge_raw_features[edge_idxs]
 
     source_memory = self.memory.get_memory(source_nodes) if not \
       self.use_source_embedding_in_message else source_node_embedding
     destination_memory = self.memory.get_memory(destination_nodes) if \
-      not self.use_destination_embedding_in_message else destination_node_embedding
+      not self.use_destination_embedding_in_message else destination_node_embedding  # 使用原始特征或memory中特征用于生成消息
 
     source_time_delta = edge_times - self.memory.last_update[source_nodes]
     source_time_delta_encoding = self.time_encoder(source_time_delta.unsqueeze(dim=1)).view(len(

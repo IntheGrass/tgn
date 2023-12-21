@@ -41,15 +41,15 @@ class LastMessageAggregator(MessageAggregator):
     unique_messages = []
     unique_timestamps = []
     
-    to_update_node_ids = []
+    to_update_node_ids = []  # 存储聚合的节点id，无消息的节点会被舍去
     
     for node_id in unique_node_ids:
         if len(messages[node_id]) > 0:
             to_update_node_ids.append(node_id)
-            unique_messages.append(messages[node_id][-1][0])
+            unique_messages.append(messages[node_id][-1][0])  # -1表示取最新消息
             unique_timestamps.append(messages[node_id][-1][1])
     
-    unique_messages = torch.stack(unique_messages) if len(to_update_node_ids) > 0 else []
+    unique_messages = torch.stack(unique_messages) if len(to_update_node_ids) > 0 else []  # 将所有node_ids消息拼接为单个张量
     unique_timestamps = torch.stack(unique_timestamps) if len(to_update_node_ids) > 0 else []
 
     return to_update_node_ids, unique_messages, unique_timestamps

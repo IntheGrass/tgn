@@ -63,7 +63,7 @@ class TemporalAttentionLayer(torch.nn.Module):
     # force the attention to just 'attend' on this neighbor (which has the same features as all
     # the others since they are fake neighbors) and will produce an equivalent result to the
     # original tgat paper which was forcing fake neighbors to all have same attention of 1e-10
-    neighbors_padding_mask[invalid_neighborhood_mask.squeeze(), 0] = False
+    neighbors_padding_mask[invalid_neighborhood_mask.squeeze(), 0] = False  # 对于无邻居的节点，设置一个0节点作为邻居
 
     # print(query.shape, key.shape)
 

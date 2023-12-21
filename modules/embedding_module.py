@@ -90,12 +90,12 @@ class GraphEmbedding(EmbeddingModule):
 
     # query node always has the start time -> time span == 0
     source_nodes_time_embedding = self.time_encoder(torch.zeros_like(
-      timestamps_torch))
+      timestamps_torch))  # (batch_size, 1, dim)
 
-    source_node_features = self.node_features[source_nodes_torch, :]
+    source_node_features = self.node_features[source_nodes_torch, :]  # 初始节点特征
 
     if self.use_memory:
-      source_node_features = memory[source_nodes, :] + source_node_features
+      source_node_features = memory[source_nodes, :] + source_node_features  # 记忆模块，memory仅仅使用用于确定第0层的节点向量
 
     if n_layers == 0:
       return source_node_features
@@ -112,15 +112,15 @@ class GraphEmbedding(EmbeddingModule):
         timestamps,
         n_neighbors=n_neighbors)
 
-      neighbors_torch = torch.from_numpy(neighbors).long().to(self.device)
+      neighbors_torch = torch.from_numpy(neighbors).long().to(self.device)  # (batch_size, n_neighbors), 邻居不足的部分设为0
 
-      edge_idxs = torch.from_numpy(edge_idxs).long().to(self.device)
+      edge_idxs = torch.from_numpy(edge_idxs).long().to(self.device)  # (batch_size, n_neighbors), 邻居不足的部分设为0
 
-      edge_deltas = timestamps[:, np.newaxis] - edge_times
+      edge_deltas = timestamps[:, np.newaxis] - edge_times  # 计算邻居边timestamp与当前的差值，必>=0
 
       edge_deltas_torch = torch.from_numpy(edge_deltas).float().to(self.device)
 
-      neighbors = neighbors.flatten()
+      neighbors = neighbors.flatten()  # (batch_size * n_neighbors, )
       neighbor_embeddings = self.compute_embedding(memory,
                                                    neighbors,
                                                    np.repeat(timestamps, n_neighbors),
@@ -128,19 +128,19 @@ class GraphEmbedding(EmbeddingModule):
                                                    n_neighbors=n_neighbors)
 
       effective_n_neighbors = n_neighbors if n_neighbors > 0 else 1
-      neighbor_embeddings = neighbor_embeddings.view(len(source_nodes), effective_n_neighbors, -1)
-      edge_time_embeddings = self.time_encoder(edge_deltas_torch)
+      neighbor_embeddings = neighbor_embeddings.view(len(source_nodes), effective_n_neighbors, -1)  # (batch_size, n_neighbors, dim)
+      edge_time_embeddings = self.time_encoder(edge_deltas_torch)  # (batch_size, n_neighbors, dim)
 
-      edge_features = self.edge_features[edge_idxs, :]
+      edge_features = self.edge_features[edge_idxs, :]  # (batch_size, n_neighbors, dim)
 
-      mask = neighbors_torch == 0
+      mask = neighbors_torch == 0  # 不全的邻居设mask=true
 
       source_embedding = self.aggregate(n_layers, source_node_conv_embeddings,
                                         source_nodes_time_embedding,
                                         neighbor_embeddings,
                                         edge_time_embeddings,
                                         edge_features,
-                                        mask)
+                                        mask)  # (batch_size, dim)
 
       return source_embedding
 

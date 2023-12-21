@@ -67,6 +67,7 @@ def run(data_name, bipartite=True):
   df, feat = preprocess(PATH)
   new_df = reindex(df, bipartite)
 
+  # 为索引为0的边设置一个空向量
   empty = np.zeros(feat.shape[1])[np.newaxis, :]
   feat = np.vstack([empty, feat])
 

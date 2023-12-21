@@ -104,6 +104,7 @@ def get_data(dataset_name, different_new_nodes_between_val_and_test=False, rando
   test_mask = timestamps > test_time
 
   if different_new_nodes_between_val_and_test:
+    # 保证测试集与验证集的新节点不相交
     n_new_nodes = len(new_test_node_set) // 2
     val_new_node_set = set(list(new_test_node_set)[:n_new_nodes])
     test_new_node_set = set(list(new_test_node_set)[n_new_nodes:])
@@ -158,6 +159,7 @@ def get_data(dataset_name, different_new_nodes_between_val_and_test=False, rando
 
 
 def compute_time_statistics(sources, destinations, timestamps):
+  # 计算源节点与目标节点的timestamp差值的平均值与标准差
   last_timestamp_sources = dict()
   last_timestamp_dst = dict()
   all_timediffs_src = []

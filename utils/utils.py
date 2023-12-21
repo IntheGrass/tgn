@@ -89,6 +89,7 @@ class RandEdgeSampler(object):
 
 
 def get_neighbor_finder(data, uniform, max_node_idx=None):
+  # 忽略边方向的邻居采样器，
   max_node_idx = max(data.sources.max(), data.destinations.max()) if max_node_idx is None else max_node_idx
   adj_list = [[] for _ in range(max_node_idx + 1)]
   for source, destination, edge_idx, timestamp in zip(data.sources, data.destinations,
