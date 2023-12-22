@@ -14,7 +14,7 @@ def load_data(dataset_name, data_dir="./data"):
     n_edges = len(graph_df)
     # 边向量用0向量代替
     edge_feature_dim = 16
-    edges_feature = np.zeros((n_edges, edge_feature_dim))
+    edges_feature = np.zeros((n_edges + 1, edge_feature_dim))
 
     # 读取数据
     sources = graph_df.src_id.values
