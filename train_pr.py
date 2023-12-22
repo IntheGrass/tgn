@@ -84,7 +84,14 @@ MESSAGE_DIM = args.message_dim
 MEMORY_DIM = args.memory_dim
 
 # paths
+Path("./saved_models/").mkdir(parents=True, exist_ok=True)
+Path("./saved_checkpoints/").mkdir(parents=True, exist_ok=True)
+
 MODEL_SAVE_PATH = f'./saved_models/{args.prefix}-{args.data}.pth'
+
+
+def get_checkpoint_path(epoch):
+    return f'./saved_checkpoints/{args.prefix}-{args.data}-{str(epoch)}.pth'
 
 
 def setup_logger():
@@ -102,10 +109,6 @@ def setup_logger():
     logger.addHandler(fh)
     logger.addHandler(ch)
     return logger
-
-
-def get_checkpoint_path(epoch):
-    return f'./saved_checkpoints/{args.prefix}-{args.data}-{str(epoch)}.pth'
 
 
 def main():
@@ -161,6 +164,7 @@ def main():
     epoch_times = []
     total_epoch_times = []
     train_losses = []
+    Path("results/").mkdir(parents=True, exist_ok=True)
     results_path = f"results/{args.prefix}-{DATA}.pkl"
 
     for epoch in range(NUM_EPOCH):
