@@ -6,7 +6,7 @@ import random
 from utils.data_processing import Data
 
 
-def load_data(dataset_name, data_dir="./data"):
+def load_data(dataset_name, data_dir="./data", is_split_val_test=True):
     # Load data and train val test split
     graph_df = pd.read_csv(os.path.join(data_dir, dataset_name, "dgl/edges.csv"))
     node_features = np.load(os.path.join(data_dir, dataset_name, "dgl/nodes_feat.npy"))
@@ -29,6 +29,17 @@ def load_data(dataset_name, data_dir="./data"):
 
     train_data = Data(sources[train_mask], destinations[train_mask], timestamps[train_mask],
                     edge_idxs[train_mask], labels[train_mask])
+
+    if not is_split_val_test:
+        test_data = Data(sources[test_val_mask], destinations[test_val_mask], timestamps[test_val_mask],
+                     edge_idxs[test_val_mask], labels[test_val_mask])
+        print("The dataset has {} interactions, involving {} different nodes".format(full_data.n_interactions,
+                                                                                     full_data.n_unique_nodes))
+        print("The training dataset has {} interactions, involving {} different nodes".format(
+            train_data.n_interactions, train_data.n_unique_nodes))
+        print("The dim of node features: {}".format(node_features.shape[1]))
+        print("The dim of edge features: {}".format(edges_feature.shape[1]))
+        return node_features, edges_feature, full_data, train_data, test_data
 
     random.seed(2023)
     # 随机划分test/val集合
