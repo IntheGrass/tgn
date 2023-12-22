@@ -88,6 +88,7 @@ Path("./saved_models/").mkdir(parents=True, exist_ok=True)
 Path("./saved_checkpoints/").mkdir(parents=True, exist_ok=True)
 
 MODEL_SAVE_PATH = f'./saved_models/{args.prefix}-{args.data}.pth'
+WHOLE_MODEL_SAVE_PATH = f'./saved_models/whole-{args.prefix}-{args.data}.pth'
 
 
 def get_checkpoint_path(epoch):
@@ -118,7 +119,7 @@ def main():
     node_features, edge_features, full_data, train_data, val_data, test_data = load_data(DATA)
     # 初始化邻居采样器
     train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
-    full_ngh_finder = get_neighbor_finder(full_data, args.uniform)  # TODO
+    full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
 
     # Initialize negative samplers
     train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
@@ -271,6 +272,7 @@ def main():
     }, open(results_path, "wb"))
     logger.info('Saving TGN model')
     torch.save(tgn.state_dict(), MODEL_SAVE_PATH)
+    torch.save(tgn, WHOLE_MODEL_SAVE_PATH)
     logger.info('TGN model saved')
 
 
