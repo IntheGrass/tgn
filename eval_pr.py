@@ -1,7 +1,7 @@
 import math
 
 import torch
-import pickle
+from tqdm import tqdm
 import numpy as np
 import argparse
 
@@ -63,7 +63,7 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
     metrics = Metrics()
     with torch.no_grad():
         model = model.eval()
-        for test_node in test_set:
+        for test_node in tqdm(test_set, total=len(test_set), desc="eval model"):
             scores = []
             timestamp = test_set[test_node]["timestamp"]
             for k in range(batch_num):
