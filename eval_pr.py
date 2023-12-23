@@ -61,32 +61,34 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
     batch_size = min(BATCH_SIZE, len(train_nodes))
     batch_num = int(len(train_nodes) / batch_size)
     metrics = Metrics()
-    for test_node in test_set:
-        scores = []
-        timestamp = test_set[test_node]["timestamp"]
-        for k in range(batch_num):
-            start = k * batch_size
-            end = min(start+batch_size, len(train_nodes))
-            destination_nodes = train_nodes[start: end]
-            source_nodes = np.repeat(test_node, len(destination_nodes))
-            edge_indices = np.zeros(len(destination_nodes))
-            timestamps = np.repeat(timestamp, len(destination_nodes))
+    with torch.no_grad():
+        model = model.eval()
+        for test_node in test_set:
+            scores = []
+            timestamp = test_set[test_node]["timestamp"]
+            for k in range(batch_num):
+                start = k * batch_size
+                end = min(start+batch_size, len(train_nodes))
+                destination_nodes = train_nodes[start: end]
+                source_nodes = np.repeat(test_node, len(destination_nodes))
+                edge_indices = np.zeros(len(destination_nodes))
+                timestamps = np.repeat(timestamp, len(destination_nodes))
 
-            if model.use_memory:
-                backup_memory = model.memory.backup_memory()
-            # TODO 由于代码实现的限制，目前的negative_nodes长度必须与source_nodes匹配，占用计算资源，后续想办法优化
-            negative_nodes = np.zeros(len(destination_nodes), dtype=int)
-            pred_score, _ = model.compute_edge_probabilities(source_nodes, destination_nodes, negative_nodes,
-                                                             edge_indices, timestamps, n_neighbors=NUM_NEIGHBORS)
-            if model.use_memory:
-                model.memory.restore_memory(backup_memory)  # 这一步是为了防止模型记忆测试数据
+                if model.use_memory:
+                    backup_memory = model.memory.backup_memory()
+                # TODO 由于代码实现的限制，目前的negative_nodes长度必须与source_nodes匹配，占用计算资源，后续想办法优化
+                negative_nodes = np.zeros(len(destination_nodes), dtype=int)
+                pred_score, _ = model.compute_edge_probabilities(source_nodes, destination_nodes, negative_nodes,
+                                                                 edge_indices, timestamps, n_neighbors=NUM_NEIGHBORS)
+                if model.use_memory:
+                    model.memory.restore_memory(backup_memory)  # 这一步是为了防止模型记忆测试数据
 
-            scores.extend(pred_score.view(-1).tolist())  # 展开为一维再添加
+                scores.extend(pred_score.view(-1).tolist())  # 展开为一维再添加
 
-        sorted_indices = np.argsort(scores)[::-1]  # 评分
-        ranked_recommendation = train_nodes[sorted_indices]
-        metrics.add(ranked_recommendation, test_set[test_node]["positive"])
-    metrics.printf()
+            sorted_indices = np.argsort(scores)[::-1]  # 评分
+            ranked_recommendation = train_nodes[sorted_indices]
+            metrics.add(ranked_recommendation, test_set[test_node]["positive"])
+        metrics.printf()  # 打印结果
 
 
 def main():
