@@ -20,6 +20,7 @@ parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia 
                     default='aan')
 parser.add_argument('--model-path', type=str, default='./saved_models/whole-pr-tgn-attn-ann.pth',
                     help='path to the trained model')
+parser.add_argument('--bs', type=int, default=200, help='Batch_size for test')
 parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbors to sample')
 parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
 parser.add_argument('--uniform', action='store_true',
@@ -29,10 +30,12 @@ args = parser.parse_args()
 
 # set global params
 GPU = args.gpu
+BATCH_SIZE = args.bs
 DATA = args.data
 NUM_NEIGHBORS = args.n_degree
 
 WHOLE_MODEL_SAVE_PATH = args.model_path
+
 
 def build_test_dict(test_data: Data):
     test_set = {}
@@ -55,7 +58,7 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
     test_set = build_test_dict(test_data)
     # timestamp =
 
-    batch_size = min(500, len(train_nodes))
+    batch_size = min(BATCH_SIZE, len(train_nodes))
     batch_num = int(len(train_nodes) / batch_size)
     metrics = Metrics()
     for test_node in test_set:
