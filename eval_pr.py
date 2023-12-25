@@ -59,7 +59,7 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
     # timestamp =
 
     batch_size = min(BATCH_SIZE, len(train_nodes))
-    batch_num = int(len(train_nodes) / batch_size)
+    batch_num = math.ceil(len(train_nodes) / batch_size)
     metrics = Metrics()
     with torch.no_grad():
         model = model.eval()
