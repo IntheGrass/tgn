@@ -20,6 +20,8 @@ parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia 
                     default='aan')
 parser.add_argument('--model-path', type=str, default='./saved_models/whole-pr-tgn-attn-ann.pth',
                     help='path to the trained model')
+parser.add_argument('--test-size', type=int, default=0,
+                    help='Test set size for evaluation. If less than or equal to 0, use all test sets')
 parser.add_argument('--bs', type=int, default=200, help='Batch_size for test')
 parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbors to sample')
 parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
@@ -33,6 +35,7 @@ GPU = args.gpu
 BATCH_SIZE = args.bs
 DATA = args.data
 NUM_NEIGHBORS = args.n_degree
+TEST_SIZE = args.test_size
 
 WHOLE_MODEL_SAVE_PATH = args.model_path
 
@@ -56,14 +59,18 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
 
     train_nodes = np.arange(1, max(train_data.unique_nodes)+1)
     test_set = build_test_dict(test_data)
-    # timestamp =
 
     batch_size = min(BATCH_SIZE, len(train_nodes))
     batch_num = math.ceil(len(train_nodes) / batch_size)
+
     metrics = Metrics()
+
     with torch.no_grad():
         model = model.eval()
-        for test_node in tqdm(test_set, total=len(test_set), desc="eval model"):
+        total = TEST_SIZE if TEST_SIZE > 0 else len(test_set)
+        for i, test_node in tqdm(enumerate(test_set), total=total, desc="eval model"):
+            if i >= total:
+                break
             scores = []
             timestamp = test_set[test_node]["timestamp"]
             for k in range(batch_num):
@@ -87,8 +94,9 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
 
             sorted_indices = np.argsort(scores)[::-1]  # 评分
             ranked_recommendation = train_nodes[sorted_indices]
-            metrics.add(ranked_recommendation, test_set[test_node]["positive"])
-        metrics.printf()  # 打印结果
+            metrics.add(ranked_recommendation, test_set[test_node]["positive"])  # 计算指标
+
+    metrics.printf()  # 打印结果
 
 
 def main():
