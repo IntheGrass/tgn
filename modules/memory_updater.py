@@ -42,7 +42,7 @@ class SequenceMemoryUpdater(MemoryUpdater):
     updated_last_update = self.memory.last_update.data.clone()
     updated_last_update[unique_node_ids] = timestamps
 
-    return updated_memory, updated_last_update
+    return updated_memory, updated_last_update  # 返回更新后的完整memoery，而非仅unique_node_ids对应的memory
 
 
 class GRUMemoryUpdater(SequenceMemoryUpdater):

@@ -29,6 +29,9 @@ parser.add_argument('--n_epoch', type=int, default=10, help='Number of epochs')
 parser.add_argument('--n_layer', type=int, default=1, help='Number of network layers')
 parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
 parser.add_argument('--patience', type=int, default=5, help='Patience for early stopping')
+parser.add_argument('--loss', type=str, default="bce", choices=[
+    "bce", "margin"], help='Type of loss function')
+
 parser.add_argument('--n_runs', type=int, default=1, help='Number of runs')
 parser.add_argument('--drop_out', type=float, default=0.1, help='Dropout probability')
 parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
@@ -95,6 +98,14 @@ def get_checkpoint_path(epoch):
     return f'./saved_checkpoints/{args.prefix}-{args.data}-{str(epoch)}.pth'
 
 
+def get_loss_function(loss_type):
+    if loss_type == "margin":
+        return torch.nn.MarginRankingLoss(margin=1.0)
+    elif loss_type == "bce":
+        return torch.nn.BCELoss()
+    return torch.nn.BCELoss()  # 默认交叉熵损失
+
+
 def setup_logger():
     # 初始化logger，支持同时在命令行与文件中输出日志
     logger = logging.getLogger()
@@ -150,7 +161,8 @@ def main():
               use_destination_embedding_in_message=args.use_destination_embedding_in_message,
               use_source_embedding_in_message=args.use_source_embedding_in_message,
               dyrep=args.dyrep)
-    criterion = torch.nn.BCELoss()
+    criterion = get_loss_function(args.loss)
+    logger.info(f"current loss: {str(criterion)}")
     optimizer = torch.optim.Adam(tgn.parameters(), lr=LEARNING_RATE)
     tgn = tgn.to(device)
 
@@ -203,7 +215,10 @@ def main():
                                                                 timestamps_batch, edge_idxs_batch, NUM_NEIGHBORS)
 
             # 损失后向传播
-            loss = criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
+            if args.loss == "margin":
+                loss = criterion(pos_prob.squeeze(), neg_prob.squeeze(), pos_label)
+            else:
+                loss = criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
             loss.backward()
             optimizer.step()
             m_loss.append(loss.item())

@@ -125,6 +125,7 @@ class TGN(torch.nn.Module):
         # Update memory for all nodes with messages stored in previous batches
         memory, last_update = self.get_updated_memory(list(range(self.n_nodes)),
                                                       self.memory.messages)
+        # FIXME 此处使获取使用所有节点消息进行更新的消息，而更新时仅使用非负节点的消息更新，因此有概率导致两者结果不一致
       else:
         memory = self.memory.get_memory(list(range(self.n_nodes)))
         last_update = self.memory.last_update
