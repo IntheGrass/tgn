@@ -164,7 +164,7 @@ class TGN(torch.nn.Module):
         self.update_memory(positives, self.memory.messages)
 
         assert torch.allclose(memory[positives], self.memory.get_memory(positives), atol=1e-5), \
-          "Something wrong in how the memory was updated"
+          "Something wrong in how the memory was updated" # FIXME 暂时撤除
 
         # Remove messages for the positives since we have already updated the memory using them
         self.memory.clear_messages(positives)
@@ -185,6 +185,7 @@ class TGN(torch.nn.Module):
       else:
         self.update_memory(unique_sources, source_id_to_messages)
         self.update_memory(unique_destinations, destination_id_to_messages)
+        self.memory.clear_messages(positives)
 
       if self.dyrep:  # 该模式下，直接使用memory中的信息作为嵌入向量
         source_node_embedding = memory[source_nodes]
@@ -194,7 +195,7 @@ class TGN(torch.nn.Module):
     return source_node_embedding, destination_node_embedding, negative_node_embedding
 
   def compute_edge_probabilities(self, source_nodes, destination_nodes, negative_nodes, edge_times,
-                                 edge_idxs, n_neighbors=20):
+                                 edge_idxs, n_neighbors=20, is_sigmoid=True):
     """
     Compute probabilities for edges between sources and destination and between sources and
     negatives by first computing temporal embeddings using the TGN encoder and then feeding them
@@ -216,6 +217,9 @@ class TGN(torch.nn.Module):
                                            negative_node_embedding])).squeeze(dim=0)  # 合并计算评分
     pos_score = score[:n_samples]
     neg_score = score[n_samples:]
+
+    if not is_sigmoid:
+        return pos_score, neg_score
 
     return pos_score.sigmoid(), neg_score.sigmoid()
 

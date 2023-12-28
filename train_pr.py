@@ -212,12 +212,14 @@ def main():
             tgn = tgn.train()
 
             pos_prob, neg_prob = tgn.compute_edge_probabilities(sources_batch, destinations_batch, negatives_batch,
-                                                                timestamps_batch, edge_idxs_batch, NUM_NEIGHBORS)
+                                                                timestamps_batch, edge_idxs_batch, NUM_NEIGHBORS,
+                                                                is_sigmoid=False)
 
             # 损失后向传播
             if args.loss == "margin":
-                loss = criterion(pos_prob.squeeze(), neg_prob.squeeze(), pos_label)
+                loss = criterion(pos_prob.sig.squeeze(), neg_prob.squeeze(), pos_label)
             else:
+                pos_prob, neg_prob = pos_prob.sigmoid(), neg_prob.sigmoid()
                 loss = criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
             loss.backward()
             optimizer.step()
