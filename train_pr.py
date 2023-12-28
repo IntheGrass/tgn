@@ -217,7 +217,7 @@ def main():
 
             # 损失后向传播
             if args.loss == "margin":
-                loss = criterion(pos_prob.sig.squeeze(), neg_prob.squeeze(), pos_label)
+                loss = criterion(pos_prob.squeeze(), neg_prob.squeeze(), pos_label)
             else:
                 pos_prob, neg_prob = pos_prob.sigmoid(), neg_prob.sigmoid()
                 loss = criterion(pos_prob.squeeze(), pos_label) + criterion(neg_prob.squeeze(), neg_label)
