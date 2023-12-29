@@ -4,12 +4,12 @@ import pickle
 import torch
 import numpy as np
 import math
-import logging
 import time
 from pathlib import Path
 
 from model.tgn import TGN
 from evaluation.evaluation import eval_edge_prediction
+from utils.logger import setup_logger
 from utils.utils import EarlyStopMonitor, RandEdgeSampler, get_neighbor_finder
 from utils.data_processing import compute_time_statistics
 from pr.loader import load_data
@@ -104,23 +104,6 @@ def get_loss_function(loss_type):
     elif loss_type == "bce":
         return torch.nn.BCELoss()
     return torch.nn.BCELoss()  # 默认交叉熵损失
-
-
-def setup_logger():
-    # 初始化logger，支持同时在命令行与文件中输出日志
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    Path("log/").mkdir(parents=True, exist_ok=True)
-    fh = logging.FileHandler('log/{}.log'.format(str(time.time())))  # 文件日志
-    fh.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()  # 命令行日志
-    ch.setLevel(logging.INFO)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    ch.setFormatter(formatter)
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-    return logger
 
 
 def main():

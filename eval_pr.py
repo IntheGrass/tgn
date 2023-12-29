@@ -8,7 +8,7 @@ import argparse
 from model.tgn import TGN
 from pr.loader import load_data
 from pr.metrics import Metrics
-from utils.data_processing import Data, compute_time_statistics
+from utils.data_processing import Data, compute_time_statistics, build_test_dict
 from utils.utils import get_neighbor_finder
 
 torch.manual_seed(0)
@@ -38,21 +38,6 @@ NUM_NEIGHBORS = args.n_degree
 TEST_SIZE = args.test_size
 
 WHOLE_MODEL_SAVE_PATH = args.model_path
-
-
-def build_test_dict(test_data: Data):
-    test_set = {}
-
-    for (source, dst, timestamp) in zip(test_data.sources, test_data.destinations, test_data.timestamps):
-        if source not in test_set:
-            test_set[source] = {}
-
-        test_set[source]["timestamp"] = timestamp
-        if "positive" not in test_set[source]:
-            test_set[source]["positive"] = []
-        test_set[source]["positive"].append(dst)
-
-    return test_set
 
 
 def eval_pr(model: TGN, train_data: Data, test_data: Data):

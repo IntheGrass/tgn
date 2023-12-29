@@ -5,11 +5,10 @@ from tqdm import tqdm
 import numpy as np
 import argparse
 
-from eval_pr import build_test_dict
 from model.mlp_predictor import MlpPredictor
 from pr.loader import load_data
 from pr.metrics import Metrics
-from utils.data_processing import Data
+from utils.data_processing import Data, build_test_dict
 
 torch.manual_seed(0)
 np.random.seed(0)

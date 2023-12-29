@@ -5,7 +5,7 @@ from utils.utils import MergeLayer
 
 
 class MlpPredictor(torch.nn.Module):
-    def __init__(self, feat_dim, node_features, device):
+    def __init__(self, feat_dim, node_features, device,):
         super(MlpPredictor, self).__init__()
         assert feat_dim == node_features.shape[1], "feat_dim don't match raw node feature dim"
         self.node_features = torch.from_numpy(node_features.astype(np.float32)).to(device)

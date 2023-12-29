@@ -15,6 +15,21 @@ class Data:
     self.n_unique_nodes = len(self.unique_nodes)
 
 
+def build_test_dict(test_data: Data):
+  test_set = {}
+
+  for (source, dst, timestamp) in zip(test_data.sources, test_data.destinations, test_data.timestamps):
+    if source not in test_set:
+      test_set[source] = {}
+
+    test_set[source]["timestamp"] = timestamp
+    if "positive" not in test_set[source]:
+      test_set[source]["positive"] = []
+    test_set[source]["positive"].append(dst)
+
+  return test_set
+
+
 def get_data_node_classification(dataset_name, use_validation=False):
   ### Load data and train val test split
   graph_df = pd.read_csv('./data/ml_{}.csv'.format(dataset_name))

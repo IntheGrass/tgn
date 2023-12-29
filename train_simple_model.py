@@ -9,7 +9,7 @@ from sklearn.metrics import average_precision_score, roc_auc_score
 
 from model.mlp_predictor import MlpPredictor
 from pr.loader import load_data
-from train_pr import setup_logger
+from utils.logger import setup_logger
 from utils.utils import get_neighbor_finder, RandEdgeSampler
 
 torch.manual_seed(0)
