@@ -6,7 +6,7 @@ import random
 from utils.data_processing import Data
 
 
-def load_data(dataset_name, data_dir="./data", is_split_val_test=True):
+def load_data(dataset_name, data_dir="./data", is_split_val_test=True, time_scale=1):
     # Load data and train val test split
     graph_df = pd.read_csv(os.path.join(data_dir, dataset_name, "dgl/edges.csv"))
     node_features = np.load(os.path.join(data_dir, dataset_name, "dgl/nodes_feat.npy"))
@@ -22,6 +22,7 @@ def load_data(dataset_name, data_dir="./data", is_split_val_test=True):
     edge_idxs = graph_df.idx.values
     labels = np.zeros(n_edges)
     timestamps = graph_df.ts.values
+    timestamps = timestamps * time_scale  # 缩放时间戳
     train_mask = graph_df.train_mask.values
     test_val_mask = graph_df.test_mask.values
 

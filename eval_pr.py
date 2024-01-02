@@ -27,6 +27,7 @@ parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbor
 parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
 parser.add_argument('--uniform', action='store_true',
                     help='take uniform sampling from temporal neighbors')
+parser.add_argument('--time-scale', type=int, default=1, help='Timestamp scaling factor')
 
 args = parser.parse_args()
 
@@ -85,7 +86,8 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
 
 
 def main():
-    node_features, edge_features, full_data, train_data, test_data = load_data(DATA, is_split_val_test=False)
+    node_features, edge_features, full_data, train_data, test_data = load_data(DATA, is_split_val_test=False,
+                                                                               time_scale=args.time_scale)
 
     full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
 

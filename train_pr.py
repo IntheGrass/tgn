@@ -31,6 +31,7 @@ parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
 parser.add_argument('--patience', type=int, default=5, help='Patience for early stopping')
 parser.add_argument('--loss', type=str, default="bce", choices=[
     "bce", "margin"], help='Type of loss function')
+parser.add_argument('--time-scale', type=int, default=1, help='Timestamp scaling factor')
 
 parser.add_argument('--n_runs', type=int, default=1, help='Number of runs')
 parser.add_argument('--drop_out', type=float, default=0.1, help='Dropout probability')
@@ -110,7 +111,8 @@ def main():
     # set up logger
     logger = setup_logger()
 
-    node_features, edge_features, full_data, train_data, val_data, test_data = load_data(DATA)
+    node_features, edge_features, full_data, train_data, val_data, test_data = load_data(DATA,
+                                                                                         time_scale=args.time_scale)
     # 初始化邻居采样器
     train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
     full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
