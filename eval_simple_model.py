@@ -16,6 +16,7 @@ np.random.seed(0)
 parser = argparse.ArgumentParser('TGN self-supervised pr model evaluation')
 parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia or reddit or aan or dblp)',
                     default='aan')
+parser.add_argument('--eval-raw', action='store_true', help='Whether to use raw feature to evaluate')
 parser.add_argument('--model-path', type=str, default='./saved_models/mlp-aan.pth',
                     help='path to the trained model')
 parser.add_argument('--test-size', type=int, default=0,
@@ -68,12 +69,45 @@ def eval_pr(model: MlpPredictor, train_data: Data, test_data: Data):
     metrics.printf()  # 打印结果
 
 
+def eval_raw(node_features, train_data: Data, test_data: Data):
+    # 使用原始向量的cos相似度进行评估
+    train_nodes = np.arange(1, max(train_data.unique_nodes) + 1)
+    test_set = build_test_dict(test_data)
+
+    batch_size = min(BATCH_SIZE, len(train_nodes))
+    batch_num = math.ceil(len(train_nodes) / batch_size)
+
+    metrics = Metrics()
+
+    total = TEST_SIZE if TEST_SIZE > 0 else len(test_set)
+    for i, test_node in tqdm(enumerate(test_set), total=total, desc="eval model"):
+        if i >= total:
+            break
+        scores = []
+        for k in range(batch_num):
+            start = k * batch_size
+            end = min(start + batch_size, len(train_nodes))
+            destination_nodes = train_nodes[start: end]
+
+            src_feature = node_features[test_node]
+            dst_features = node_features[destination_nodes]
+            distances = np.linalg.norm(dst_features - src_feature, axis=1)
+            sorted_indices = np.argsort(distances)
+            ranked_recommendation = train_nodes[sorted_indices]
+            metrics.add(ranked_recommendation, test_set[test_node]["positive"])  # 计算指标
+    metrics.printf()  # 打印结果
+
+
 if __name__ == '__main__':
     node_features, edge_features, full_data, train_data, test_data = load_data(DATA, is_split_val_test=False)
 
     # Set device
     device_string = 'cuda:{}'.format(GPU) if torch.cuda.is_available() else 'cpu'
     device = torch.device(device_string)
+
+    if args.eval_raw:
+        eval_raw(node_features, train_data, test_data)
+        exit(0)
 
     model = torch.load(MODEL_SAVE_PATH, map_location=torch.device(device_string))
     model.device = device
