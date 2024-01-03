@@ -7,8 +7,8 @@ import torch
 import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from model.mlp_predictor import MlpPredictor
-from pr.loader import load_data
+from model.mlp_predictor import MlpPredictor, MlpTimePredictor
+from pr.loader import load_data, load_nodes_meta
 from utils.logger import setup_logger
 from utils.utils import get_neighbor_finder, RandEdgeSampler
 
@@ -19,11 +19,14 @@ np.random.seed(0)
 parser = argparse.ArgumentParser('self-supervised training')
 parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia or reddit or aan or dblp)',
                     default='aan')
-parser.add_argument('--bs', type=int, default=200, help='Batch_size')
+parser.add_argument('--bs', type=int, default=512, help='Batch_size')
 parser.add_argument('--n-epoch', type=int, default=10, help='Number of epochs')
 parser.add_argument('--prefix', type=str, default='mlp', help='Prefix to name the checkpoints')
 parser.add_argument('--feat-dim', type=int, default=768, help='Dimensions of the node')
-parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
+parser.add_argument('--lr', type=float, default=0.00005, help='Learning rate')
+parser.add_argument('--use-time', action='store_true', help='Whether to use time features as input')
+parser.add_argument('--use-time-type', type=str, help='how to use time features. optional: add, concat',
+                    default='add')
 args = parser.parse_args()
 
 # set global params
@@ -84,6 +87,7 @@ def main():
     logger = setup_logger()
 
     node_features, edge_features, full_data, train_data, val_data, test_data = load_data(DATA)
+    _, _, timestamps = load_nodes_meta(DATA)
 
     # Initialize negative samplers
     train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
@@ -94,7 +98,11 @@ def main():
     device_string = 'cuda:{}'.format(GPU) if torch.cuda.is_available() else 'cpu'
     device = torch.device(device_string)
 
-    model = MlpPredictor(FEAT_DIM, node_features, device)
+    if args.use_time:
+        logger.info(f"use predictor with time: {args.use_time_type}")
+        model = MlpTimePredictor(FEAT_DIM, node_features, timestamps, device, time_type=args.use_time_type)
+    else:
+        model = MlpPredictor(FEAT_DIM, node_features, device)
 
     criterion = torch.nn.MarginRankingLoss(margin=1.0)
     logger.info(f"current loss function: {str(criterion)}")
@@ -124,7 +132,7 @@ def main():
             end_idx = min(num_instance, start_idx + BATCH_SIZE)
             sources_batch, destinations_batch = train_data.sources[start_idx:end_idx], \
                 train_data.destinations[start_idx:end_idx]
-            timestamps_batch = train_data.timestamps[start_idx:end_idx]
+            # timestamps_batch = train_data.timestamps[start_idx:end_idx]
 
             size = len(sources_batch)
 

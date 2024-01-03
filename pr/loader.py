@@ -78,4 +78,21 @@ def load_data(dataset_name, data_dir="./data", is_split_val_test=True, time_scal
     return node_features, edges_feature, full_data, train_data, val_data, test_data
 
 
+def load_nodes_meta(dataset_name, data_dir="./data"):
+    # Load node meta data
+    nodes_df = pd.read_csv(os.path.join(data_dir, dataset_name, "dgl/nodes.csv"))
+
+    # meta data
+    node_ids = nodes_df.node_id.values
+    pids = nodes_df.pid.values
+    years = nodes_df.year.values
+
+    # insert 0
+    node_ids = np.insert(node_ids, 0, 0)
+    pids = np.insert(pids, 0, "None")
+    years = np.insert(years, 0, 0)
+
+    return node_ids, pids, years
+
+
 
