@@ -35,6 +35,25 @@ class MLP(torch.nn.Module):
     return self.fc_3(x).squeeze(dim=1)
 
 
+class DistanceLayer(torch.nn.Module):
+  def __init__(self, input_dim, hidden_dim, is_shared=False):
+    super().__init__()
+    self.fc1 = torch.nn.Linear(input_dim, hidden_dim)
+    torch.nn.init.xavier_normal_(self.fc1.weight)
+    if is_shared:
+      self.fc2 = self.fc1
+    else:
+      self.fc2 = torch.nn.Linear(input_dim, hidden_dim)
+      torch.nn.init.xavier_normal_(self.fc2.weight)
+    self.act = torch.nn.ReLU()
+
+  def forward(self, x1, x2):
+    y1 = self.fc1(x1)
+    y2 = self.fc2(x2)
+    # 计算二阶欧式距离
+    distance = torch.nn.functional.pairwise_distance(y1, y2, p=2)  # (batch_size, 1)
+    return distance
+
 class EarlyStopMonitor(object):
   def __init__(self, max_round=3, higher_better=True, tolerance=1e-10):
     self.max_round = max_round
