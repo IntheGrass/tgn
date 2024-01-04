@@ -12,7 +12,7 @@ class MlpPredictor(torch.nn.Module):
         self.node_features = torch.from_numpy(node_features.astype(np.float32)).to(device)
         self.node_feature_dim = feat_dim
         self.device = device
-        self.affinity_score = get_score_layer(self.node_feature_dim, layer_type)
+        self.affinity_score = get_score_layer(self.node_feature_dim, self.node_feature_dim, layer_type)
 
     def forward(self, source_nodes, destination_nodes):
         # 返回source到dst边成立的可能性分数
@@ -46,7 +46,7 @@ class MlpTimePredictor(MlpPredictor):
         else:
             assert self.node_feature_dim == self.time_feature_dim, "time feature dim don't match node feature dim"
             input_dim = self.node_feature_dim
-        self.affinity_score = get_score_layer(input_dim, layer_type)
+        self.affinity_score = get_score_layer(input_dim, self.node_feature_dim, layer_type)
 
     def forward(self, source_nodes, destination_nodes):
         src_time_features = self._calculate_timestamp_features(self.timestamps[source_nodes])
@@ -73,11 +73,11 @@ class MlpTimePredictor(MlpPredictor):
         return time_features
 
 
-def get_score_layer(input_dim, layer_type="merge"):
+def get_score_layer(input_dim, feat_dim, layer_type="merge"):
     layer_type = layer_type.lower()
     if layer_type == "distance":
-        return DistanceLayer(input_dim, input_dim)
+        return DistanceLayer(input_dim, feat_dim)
     elif layer_type == "merge":
-        return MergeLayer(input_dim, input_dim, input_dim, 1)
+        return MergeLayer(input_dim, input_dim, feat_dim, 1)
     else:
         raise Exception(f"unsupported layer type: {layer_type}")
