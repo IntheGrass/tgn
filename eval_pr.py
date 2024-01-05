@@ -1,4 +1,5 @@
 import math
+import os.path
 
 import torch
 from tqdm import tqdm
@@ -18,10 +19,11 @@ np.random.seed(0)
 parser = argparse.ArgumentParser('TGN self-supervised pr model evaluation')
 parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia or reddit or aan or dblp)',
                     default='aan')
-parser.add_argument('--model-path', type=str, default='./saved_models/whole-pr-tgn-attn-ann.pth',
+parser.add_argument('--prefix', type=str, default='pr-tgn-attn',
                     help='path to the trained model')
 parser.add_argument('--test-size', type=int, default=0,
                     help='Test set size for evaluation. If less than or equal to 0, use all test sets')
+parser.add_argument('--n_epoch', type=int, default=0, help='The epochs of checkpoint')
 parser.add_argument('--bs', type=int, default=200, help='Batch_size for test')
 parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbors to sample')
 parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
@@ -38,7 +40,19 @@ DATA = args.data
 NUM_NEIGHBORS = args.n_degree
 TEST_SIZE = args.test_size
 
-WHOLE_MODEL_SAVE_PATH = args.model_path
+MODEL_NAME = f"{args.prefix}-{args.data}"
+WHOLE_MODEL_SAVE_PATH = os.path.join("./saved_models", f"whole-{MODEL_NAME}.pth")
+
+
+def get_model(device):
+    model = torch.load(WHOLE_MODEL_SAVE_PATH, map_location=device)
+    checkpoint_epoch = args.n_epoch - 1  # checkpoint的epoch从0开始计数
+    if checkpoint_epoch >= 0:
+        # 加载指定epoch下的模型
+        checkpoint_path = os.path.join("./saved_checkpoints", f"{MODEL_NAME}-{str(checkpoint_epoch)}.pth")
+        model.load_state_dict(torch.load(checkpoint_path))
+        print(f"load checkpoint: {checkpoint_path}")
+    return model
 
 
 def eval_pr(model: TGN, train_data: Data, test_data: Data):
@@ -95,9 +109,7 @@ def main():
     device_string = 'cuda:{}'.format(GPU) if torch.cuda.is_available() else 'cpu'
     device = torch.device(device_string)
 
-    tgn = torch.load(WHOLE_MODEL_SAVE_PATH, map_location=torch.device(device_string))
-    # tgn = TGN(neighbor_finder=full_ngh_finder, node_features=node_features,
-    #           edge_features=edge_features, device=device)
+    tgn = get_model(device)
 
     tgn.set_neighbor_finder(full_ngh_finder)
     tgn.device = device
