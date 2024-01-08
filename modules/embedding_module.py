@@ -250,9 +250,10 @@ class SageEmbedding(GraphEmbedding):
                                              for _ in range(n_layers)])
         self.fc_self = torch.nn.ModuleList([torch.nn.Linear(embedding_dimension + n_time_features,
                                                             embedding_dimension, bias=False)
-                                             for _ in range(n_layers)])
+                                            for _ in range(n_layers)])
         if bias:
-            self.bias = [torch.nn.parameter.Parameter(torch.zeros(embedding_dimension)) for _ in range(n_layers)]
+            self.bias = torch.nn.ParameterList([torch.nn.parameter.Parameter(torch.zeros(embedding_dimension))
+                                                for _ in range(n_layers)])
         self.feat_drop = nn.Dropout(self.dropout)
         self.reset_parameters()
 
