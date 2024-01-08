@@ -43,7 +43,7 @@ parser.add_argument('--backprop_every', type=int, default=1, help='Every how man
 parser.add_argument('--use_memory', action='store_true',
                     help='Whether to augment the model with a node memory')
 parser.add_argument('--embedding_module', type=str, default="graph_attention", choices=[
-    "graph_attention", "graph_sum", "identity", "time"], help='Type of embedding module')
+    "graph_attention", "graph_sum", "identity", "time", "sage"], help='Type of embedding module')
 parser.add_argument('--message_function', type=str, default="identity", choices=[
     "mlp", "identity"], help='Type of message function')
 parser.add_argument('--memory_updater', type=str, default="gru", choices=[
