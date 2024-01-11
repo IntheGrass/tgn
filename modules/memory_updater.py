@@ -19,6 +19,15 @@ class SequenceMemoryUpdater(MemoryUpdater):
     if len(unique_node_ids) <= 0:
       return
 
+    last_update = self.memory.get_last_update(unique_node_ids)
+    if not (last_update <= timestamps).all().item():
+      err_indices = torch.nonzero(last_update > timestamps).squeeze() # 不符合条件的index
+      err_last_update = last_update[err_indices]
+      err_timestamp = timestamps[err_indices]
+      print("err last update:", err_last_update)
+      print("err timestamps:", err_timestamp)
+      raise Exception(f"Trying to update memory to time in the past. The number of exception: {str(len(err_indices))}")
+
     assert (self.memory.get_last_update(unique_node_ids) <= timestamps).all().item(), "Trying to " \
                                                                                      "update memory to time in the past"
 
@@ -42,7 +51,7 @@ class SequenceMemoryUpdater(MemoryUpdater):
     updated_last_update = self.memory.last_update.data.clone()
     updated_last_update[unique_node_ids] = timestamps
 
-    return updated_memory, updated_last_update  # 返回更新后的完整memoery，而非仅unique_node_ids对应的memory
+    return updated_memory, updated_last_update  # 返回更新后的完整memory，而非仅unique_node_ids对应的memory
 
 
 class GRUMemoryUpdater(SequenceMemoryUpdater):
