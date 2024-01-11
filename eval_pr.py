@@ -86,7 +86,7 @@ def eval_pr(model: TGN, train_data: Data, test_data: Data):
                 # TODO 由于代码实现的限制，目前的negative_nodes长度必须与source_nodes匹配，占用计算资源，后续想办法优化
                 negative_nodes = np.zeros(len(destination_nodes), dtype=int)
                 pred_score, _ = model.compute_edge_probabilities(source_nodes, destination_nodes, negative_nodes,
-                                                                 edge_indices, timestamps, n_neighbors=NUM_NEIGHBORS)
+                                                                 timestamps, edge_indices, n_neighbors=NUM_NEIGHBORS)
                 if model.use_memory:
                     model.memory.restore_memory(backup_memory)  # 这一步是为了防止模型记忆测试数据
 
