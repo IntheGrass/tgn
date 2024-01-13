@@ -178,6 +178,7 @@ class NeighborFinder:
 
       if len(source_neighbors) > 0 and n_neighbors > 0:
         if self.uniform:  # if we are applying uniform sampling, shuffles the data above before sampling
+          # 相当于有放回的随机采样，只要存在邻居，则一定能采样n_neighbors个邻居
           sampled_idx = np.random.randint(0, len(source_neighbors), n_neighbors)
 
           neighbors[i, :] = source_neighbors[sampled_idx]
@@ -190,7 +191,7 @@ class NeighborFinder:
           edge_times[i, :] = edge_times[i, :][pos]
           edge_idxs[i, :] = edge_idxs[i, :][pos]
         else:
-          # Take most recent interactions
+          # Take most recent interactions。相当于无放回采样，若总邻居数小于n_neighbors，则相当于无采样，即所有邻居作为样本
           source_edge_times = source_edge_times[-n_neighbors:]
           source_neighbors = source_neighbors[-n_neighbors:]
           source_edge_idxs = source_edge_idxs[-n_neighbors:]

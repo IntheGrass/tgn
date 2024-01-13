@@ -255,6 +255,7 @@ class TGN(torch.nn.Module):
 
   def get_raw_messages(self, source_nodes, source_node_embedding, destination_nodes,
                        destination_node_embedding, edge_times, edge_idxs):  # 该方法用于生成消息
+    # 默认情况下，原始消息仅包含：源节点与目标的memory + 边特征 + 当前时间与上次更新时间的差值
     edge_times = torch.from_numpy(edge_times).float().to(self.device)
     edge_features = self.edge_raw_features[edge_idxs]
 
