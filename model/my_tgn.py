@@ -14,7 +14,7 @@ from utils.utils import MergeLayer
 
 class MyTgn(nn.Module):
     # 图卷积模型，根据图节点生成其嵌入向量
-    def __init__(self, neighbor_finder, node_features, device, n_layers=2,
+    def __init__(self, neighbor_finder, node_features, device, time_encoder, n_layers=2,
                  n_heads=2, dropout=0.1, use_memory=False, n_neighbors=10,
                  message_dimension=100, memory_dimension=500, embedding_module_type="sage",
                  message_function="mlp", aggregator_type="last", memory_updater_type="gru",
@@ -39,10 +39,10 @@ class MyTgn(nn.Module):
         self.embedding_dim = self.node_feature_dim  # output dim. TODO: 设置为可自定义？、
 
         # modules
+        self.time_encoder = time_encoder
         if self.use_memory:
             self.memory_dimension = memory_dimension
-            raw_message_dimension = 2 * self.memory_dimension + self.n_edge_features + \
-                                    self.time_encoder.dimension
+            raw_message_dimension = 2 * self.memory_dimension + self.time_encoder.dimension
             message_dimension = message_dimension if message_function != "identity" else raw_message_dimension
 
             self.memory = Memory(n_nodes=self.n_nodes,
@@ -64,7 +64,7 @@ class MyTgn(nn.Module):
         self.embedding_module = get_embedding_module(self.embedding_module_type,
                                                      self.node_raw_features,
                                                      self.neighbor_finder,
-                                                     None,
+                                                     self.time_encoder,
                                                      self.n_layers,
                                                      self.node_feature_dim,
                                                      self.device,
@@ -75,9 +75,10 @@ class MyTgn(nn.Module):
         pass
 
     def compute_pair_edge_embedding(self, src_nodes, dst_nodes, cut_time_l, n_neighbors=20):
-        # 计算成对节点（即边的两个节点）的嵌入，会更行memory和message
+        # 计算成对节点（即边的两个节点）的嵌入，会更新memory和message
         n_samples = len(src_nodes)
         nodes = np.concatenate([src_nodes, dst_nodes])
+        all_cut_time_l = np.concatenate([cut_time_l, cut_time_l])
 
         memory = None
         if self.use_memory:
@@ -87,7 +88,7 @@ class MyTgn(nn.Module):
         # Compute the embeddings using the embedding module
         node_embedding = self.embedding_module.compute_embedding(memory=memory,
                                                                  source_nodes=nodes,
-                                                                 timestamps=cut_time_l,
+                                                                 timestamps=all_cut_time_l,
                                                                  n_layers=self.n_layers,
                                                                  n_neighbors=n_neighbors)
 
