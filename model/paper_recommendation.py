@@ -20,9 +20,10 @@ class PrModel(nn.Module, IPaperRecommendation):
                  n_layers=2, n_heads=2, dropout=0.1, use_memory=True, n_neighbors=10,
                  message_dimension=100, memory_dimension=500,
                  embedding_module_type="sage", message_function="identity", aggregator_type="last",
-                 memory_updater_type="gru"):
+                 memory_updater_type="gru", use_text=True):
         super(PrModel, self).__init__()
         IPaperRecommendation.__init__(self)
+        self.use_text = use_text  # 是否结合文本向量
         self.neighbor_finder = neighbor_finder
         self.node_features = torch.from_numpy(node_features).float().to(device)
         self.node_timestamps = torch.from_numpy(node_timestamps).float().to(device)
@@ -41,7 +42,8 @@ class PrModel(nn.Module, IPaperRecommendation):
                                            embedding_module_type=embedding_module_type,
                                            message_function=message_function,
                                            aggregator_type=aggregator_type, memory_updater_type=memory_updater_type)
-        self.fc = nn.Linear(self.text_feature_dim + self.graph_feature_dim, self.node_feature_dim)  # 结合文本向量与图向量
+        if self.use_text:
+            self.fc = nn.Linear(self.text_feature_dim + self.graph_feature_dim, self.node_feature_dim)  # 结合文本向量与图向量
 
         self.affinity_score = MergeLayer(self.node_feature_dim, self.node_feature_dim,
                                          self.node_feature_dim,
@@ -63,17 +65,21 @@ class PrModel(nn.Module, IPaperRecommendation):
         src_graph_embedding, dst_graph_embedding = self.graph_embedding_layer.compute_pair_edge_embedding(
             src_nodes, dst_nodes, edge_times, n_neighbors=n_neighbors)
         neg_graph_embedding = self.graph_embedding_layer.embedding_nodes(neg_nodes, edge_times, n_neighbors=n_neighbors)
-
-        nodes = np.concatenate([src_nodes, dst_nodes, neg_nodes])
-        text_embedding = self.compute_text_embedding(nodes)
         graph_embedding = torch.cat([src_graph_embedding, dst_graph_embedding, neg_graph_embedding], dim=0)
 
-        node_embedding = self.compose_text_graph_embedding(text_embedding, graph_embedding)  # (3*batch_size, feat_dim)
+        if self.use_text:
+            # 结合文本嵌入与图嵌入构建节点嵌入
+            nodes = np.concatenate([src_nodes, dst_nodes, neg_nodes])
+            text_embedding = self.compute_text_embedding(nodes)
+
+            node_embedding = self.compose_text_graph_embedding(text_embedding, graph_embedding)  # (3*batch_size, feat_dim)
+        else:
+            node_embedding = graph_embedding
 
         src_node_embedding = node_embedding[:batch_size]
         dst_node_embedding = node_embedding[batch_size:2 * batch_size]
         neg_node_embedding = node_embedding[2 * batch_size:]
-
+        # predict score
         score = self.affinity_score(torch.cat([src_node_embedding, src_node_embedding], dim=0),
                                     torch.cat([dst_node_embedding, neg_node_embedding])).squeeze(dim=0)  # 合并计算评分
 
@@ -90,13 +96,20 @@ class PrModel(nn.Module, IPaperRecommendation):
         assert len(src_nodes) == len(dst_nodes), "The size of src_nodes don't match dst_nodes"
         batch_size = len(src_nodes)
         nodes = np.concatenate([src_nodes, dst_nodes])
-
-        text_embedding = self.compute_text_embedding(nodes)
         cut_time_l = np.concatenate([edge_times, edge_times])
+
+
         graph_embedding = self.graph_embedding_layer.embedding_nodes(nodes, cut_time_l, n_neighbors=n_neighbors)
 
         # 得到最终的节点嵌入
-        node_embedding = self.compose_text_graph_embedding(text_embedding, graph_embedding)  # (2*batch_size, feat_dim)
+        if self.use_text:
+            # 结合文本与图嵌入构建节点嵌入
+            text_embedding = self.compute_text_embedding(nodes)
+            node_embedding = self.compose_text_graph_embedding(text_embedding,
+                                                               graph_embedding)  # (2*batch_size, feat_dim)
+        else:
+            node_embedding = graph_embedding
+
         src_node_embedding = node_embedding[:batch_size]
         dst_node_embedding = node_embedding[batch_size:]
 

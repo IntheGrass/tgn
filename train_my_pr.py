@@ -41,6 +41,8 @@ parser.add_argument('--node_dim', type=int, default=100, help='Dimensions of the
 parser.add_argument('--time_dim', type=int, default=100, help='Dimensions of the time embedding')
 parser.add_argument('--backprop_every', type=int, default=1, help='Every how many batches to '
                                                                   'backprop')
+parser.add_argument('--use_text', action='store_true',
+                    help='Whether to use text embedding')
 parser.add_argument('--use_memory', action='store_true',
                     help='Whether to augment the model with a node memory')
 parser.add_argument('--embedding_module', type=str, default="graph_attention", choices=[
@@ -51,13 +53,9 @@ parser.add_argument('--memory_updater', type=str, default="gru", choices=[
     "gru", "rnn"], help='Type of memory updater')
 parser.add_argument('--aggregator', type=str, default="last", help='Type of message '
                                                                    'aggregator')
-parser.add_argument('--memory_update_at_end', action='store_true',
-                    help='Whether to update memory at the end or at the start of the batch')
 parser.add_argument('--message_dim', type=int, default=100, help='Dimensions of the messages')
 parser.add_argument('--memory_dim', type=int, default=768, help='Dimensions of the memory for '
                                                                 'each user')  # TODO 降低dim
-parser.add_argument('--different_new_nodes', action='store_true',
-                    help='Whether to use disjoint set of new nodes for train and val')
 parser.add_argument('--uniform', action='store_true',
                     help='take uniform sampling from temporal neighbors')
 parser.add_argument('--randomize_features', action='store_true',
@@ -134,7 +132,8 @@ def main():
                     use_memory=USE_MEMORY, n_neighbors=NUM_NEIGHBORS,
                     message_dimension=MESSAGE_DIM, memory_dimension=MEMORY_DIM,
                     embedding_module_type=args.embedding_module, message_function=args.message_function,
-                    aggregator_type=args.aggregator, memory_updater_type=args.memory_updater)
+                    aggregator_type=args.aggregator, memory_updater_type=args.memory_updater,
+                    use_text=args.use_text)
 
     criterion = get_loss_function(args.loss)
     logger.info(f"current loss: {str(criterion)}")
