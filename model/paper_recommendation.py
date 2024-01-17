@@ -62,9 +62,10 @@ class PrModel(nn.Module, IPaperRecommendation):
         batch_size = len(src_nodes)
         assert batch_size == len(dst_nodes) == len(neg_nodes), "batch size is not matched"
 
+        # Note: 必须首先计算不影响memory的负节点嵌入，否则，会导致计算负节点嵌入使用正结点所计算的memory
+        neg_graph_embedding = self.graph_embedding_layer.embedding_nodes(neg_nodes, edge_times, n_neighbors=n_neighbors)
         src_graph_embedding, dst_graph_embedding = self.graph_embedding_layer.compute_pair_edge_embedding(
             src_nodes, dst_nodes, edge_times, n_neighbors=n_neighbors)
-        neg_graph_embedding = self.graph_embedding_layer.embedding_nodes(neg_nodes, edge_times, n_neighbors=n_neighbors)
         graph_embedding = torch.cat([src_graph_embedding, dst_graph_embedding, neg_graph_embedding], dim=0)
 
         if self.use_text:
