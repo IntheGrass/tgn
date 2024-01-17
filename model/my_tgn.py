@@ -9,7 +9,6 @@ from modules.memory_updater import get_memory_updater
 from modules.message_aggregator import get_message_aggregator
 from modules.message_function import get_message_function
 from modules.pr.embedding import get_embedding_module
-from utils.utils import MergeLayer
 
 
 class MyTgn(nn.Module):
@@ -96,13 +95,19 @@ class MyTgn(nn.Module):
         dst_embedding = node_embedding[n_samples:]
 
         if self.use_memory:
-            unique_nodes, node_id_to_messages = self.get_raw_messages(src_nodes,
-                                                                      src_embedding,
-                                                                      dst_nodes,
-                                                                      dst_embedding,
-                                                                      cut_time_l)
+            unique_sources, src_to_messages = self.get_raw_messages(src_nodes,
+                                                                    src_embedding,
+                                                                    dst_nodes,
+                                                                    dst_embedding,
+                                                                    cut_time_l)
+            unique_destinations, dst_to_messages = self.get_raw_messages(dst_nodes,
+                                                                         dst_embedding,
+                                                                         src_nodes,
+                                                                         src_embedding,
+                                                                         cut_time_l)
 
-            self.update_memory(unique_nodes, node_id_to_messages)
+            self.update_memory(unique_sources, src_to_messages)
+            self.update_memory(unique_destinations, dst_to_messages)
             self.memory.clear_messages(nodes)
 
         return src_embedding, dst_embedding
@@ -152,18 +157,18 @@ class MyTgn(nn.Module):
         return updated_memory, updated_last_update
 
     def get_raw_messages(self, source_nodes, source_node_embedding, destination_nodes,
-                       destination_node_embedding, edge_times):  # 该方法用于生成消息
+                         destination_node_embedding, edge_times):  # 该方法用于生成消息
         # 默认情况下，原始消息仅包含：源节点与目标的memory + 边特征 + 当前时间与上次更新时间的差值
         edge_times = torch.from_numpy(edge_times).float().to(self.device)
 
         source_memory = self.memory.get_memory(source_nodes) if not \
-          self.use_source_embedding_in_message else source_node_embedding
+            self.use_source_embedding_in_message else source_node_embedding
         destination_memory = self.memory.get_memory(destination_nodes) if \
-          not self.use_destination_embedding_in_message else destination_node_embedding  # 使用原始特征或memory中特征用于生成消息
+            not self.use_destination_embedding_in_message else destination_node_embedding  # 使用原始特征或memory中特征用于生成消息
 
         source_time_delta = edge_times - self.memory.last_update[source_nodes]
         source_time_delta_encoding = self.time_encoder(source_time_delta.unsqueeze(dim=1)).view(len(
-          source_nodes), -1)
+            source_nodes), -1)
 
         source_message = torch.cat([source_memory, destination_memory, source_time_delta_encoding],
                                    dim=1)
@@ -178,11 +183,3 @@ class MyTgn(nn.Module):
     def set_neighbor_finder(self, neighbor_finder):
         self.neighbor_finder = neighbor_finder
         self.embedding_module.neighbor_finder = neighbor_finder
-
-
-
-
-
-
-
-

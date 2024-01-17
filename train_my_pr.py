@@ -186,7 +186,8 @@ def main():
             model = model.train()
 
             pos_prob, neg_prob = model.compute_edge_probabilities(sources_batch, destinations_batch, negatives_batch,
-                                                                  timestamps_batch, NUM_NEIGHBORS, is_sigmoid=False)
+                                                                  timestamps_batch, n_neighbors=NUM_NEIGHBORS,
+                                                                  is_sigmoid=False)
 
             # 损失后向传播
             if args.loss == "margin":
