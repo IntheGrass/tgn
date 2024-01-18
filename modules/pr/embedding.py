@@ -162,7 +162,8 @@ class GraphAttentionEmbedding(GraphEmbedding):
                                               neighbor_embeddings,
                                               edge_time_embeddings,
                                               # 使用空的边向量
-                                              torch.zeros(source_node_features.shape[0], 0).to(self.device),
+                                              torch.zeros(neighbor_embeddings.shape[0],
+                                                          neighbor_embeddings.shape[1], 0).to(self.device),
                                               mask)
 
         return source_embedding
