@@ -44,6 +44,7 @@ class PrModel(nn.Module, IPaperRecommendation):
                                            aggregator_type=aggregator_type, memory_updater_type=memory_updater_type)
         if self.use_text:
             self.fc = nn.Linear(self.text_feature_dim + self.graph_feature_dim, self.node_feature_dim)  # 结合文本向量与图向量
+            torch.nn.init.xavier_normal_(self.fc.weight)
 
         self.affinity_score = MergeLayer(self.node_feature_dim, self.node_feature_dim,
                                          self.node_feature_dim,
