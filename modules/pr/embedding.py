@@ -154,15 +154,15 @@ class GraphAttentionEmbedding(GraphEmbedding):
             for _ in range(n_layers)])
 
     def aggregate(self, n_layer, source_node_features, source_nodes_time_embedding,
-                  neighbor_embeddings,
-                  edge_time_embeddings, edge_features, mask):
+                  neighbor_embeddings, edge_time_embeddings, mask):
         attention_model = self.attention_models[n_layer - 1]
 
         source_embedding, _ = attention_model(source_node_features,
                                               source_nodes_time_embedding,
                                               neighbor_embeddings,
                                               edge_time_embeddings,
-                                              edge_features,
+                                              # 使用空的边向量
+                                              torch.zeros(source_node_features.shape[0], 0).to(self.device),
                                               mask)
 
         return source_embedding
