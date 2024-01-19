@@ -66,6 +66,8 @@ parser.add_argument('--use_source_embedding_in_message', action='store_true',
                     help='Whether to use the embedding of the source node as part of the message')
 parser.add_argument('--dyrep', action='store_true',
                     help='Whether to run the dyrep model')
+parser.add_argument('--resume_epoch', type=int, default=0, help='指定断点续传时所用的模型epoch'),
+parser.add_argument('--interval', type=int, default=1, help='The interval to save checkpoint')
 
 args = parser.parse_args()
 
@@ -135,6 +137,10 @@ def main():
                     aggregator_type=args.aggregator, memory_updater_type=args.memory_updater,
                     use_text=args.use_text)
 
+    if args.resume_epoch != 0:
+        model.load_state_dict(torch.load(get_checkpoint_path(args.resume_epoch-1)))
+
+
     criterion = get_loss_function(args.loss)
     logger.info(f"current loss: {str(criterion)}")
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -178,6 +184,12 @@ def main():
             size = len(sources_batch)
 
             _, negatives_batch = train_rand_sampler.sample(size)  # 纯随机地选取源节点与目标节点，不区分是否是真实存在的边
+
+            neighbors, _, edge_times = train_ngh_finder.get_temporal_neighbor(sources_batch,
+                                                                              timestamps_batch,
+                                                                              n_neighbors=NUM_NEIGHBORS)
+            neighbors_torch = torch.from_numpy(neighbors).long().to(device)
+            print(torch.nonzero(torch.count_nonzero(neighbors_torch, dim=1)))
 
             with torch.no_grad():
                 pos_label = torch.ones(size, dtype=torch.float, device=device, requires_grad=False)
@@ -224,7 +236,8 @@ def main():
         logger.info(
             'val ap: {}, val auc: {}'.format(val_ap, val_auc))
 
-        torch.save(model.state_dict(), get_checkpoint_path(epoch))  # save checkpoint
+        if (epoch + 1) % args.interval == 0:
+            torch.save(model.state_dict(), get_checkpoint_path(epoch))  # save checkpoint
 
     # 评估测试集结果
     model.set_neighbor_finder(full_ngh_finder)
