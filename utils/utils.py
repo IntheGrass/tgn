@@ -108,6 +108,15 @@ class RandEdgeSampler(object):
         self.random_state = np.random.RandomState(self.seed)
 
 
+def get_diff_neighbor_finder(data, uniform, finder_type="all", max_node_idx=None):
+    if finder_type == "in":
+        get_in_neighbor_finder(data, uniform, max_node_idx)
+    elif finder_type == "out":
+        get_out_neighbor_finder(data, uniform, max_node_idx)
+    else:
+        get_neighbor_finder(data, uniform, max_node_idx)
+
+
 def get_neighbor_finder(data, uniform, max_node_idx=None):
     # 忽略边方向的邻居采样器，
     max_node_idx = max(data.sources.max(), data.destinations.max()) if max_node_idx is None else max_node_idx

@@ -11,7 +11,7 @@ from model.tgn import TGN
 from pr.loader import load_data
 from pr.metrics import Metrics
 from utils.data_processing import Data, compute_time_statistics, build_test_dict
-from utils.utils import get_neighbor_finder
+from utils.utils import get_neighbor_finder, get_diff_neighbor_finder
 
 torch.manual_seed(0)
 np.random.seed(0)
@@ -31,6 +31,8 @@ parser.add_argument('--gpu', type=int, default=0, help='Idx for the gpu to use')
 parser.add_argument('--uniform', action='store_true',
                     help='take uniform sampling from temporal neighbors')
 parser.add_argument('--time-scale', type=int, default=1, help='Timestamp scaling factor')
+parser.add_argument('--neigh_finder', type=str, default="all", choices=["all", "in", "out"],
+                    help='The type of neighbor finder')
 
 args = parser.parse_args()
 
@@ -96,7 +98,7 @@ def main():
     node_features, edge_features, full_data, train_data, test_data = load_data(DATA, is_split_val_test=False,
                                                                                time_scale=args.time_scale)
 
-    full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
+    full_ngh_finder = get_diff_neighbor_finder(full_data, args.uniform, finder_type=args.neigh_finder)
 
     # Set device
     device_string = 'cuda:{}'.format(GPU) if torch.cuda.is_available() else 'cpu'

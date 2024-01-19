@@ -11,7 +11,7 @@ from model.paper_recommendation import PrModel
 from model.tgn import TGN
 from evaluation.evaluation import eval_pr_edge_prediction
 from utils.logger import setup_logger
-from utils.utils import EarlyStopMonitor, RandEdgeSampler, get_neighbor_finder, get_in_neighbor_finder
+from utils.utils import EarlyStopMonitor, RandEdgeSampler, get_diff_neighbor_finder
 from utils.data_processing import compute_time_statistics
 from pr.loader import load_data, load_nodes_meta
 
@@ -119,12 +119,8 @@ def main():
     _, _, node_timestamps = load_nodes_meta(DATA)
 
     # 初始化邻居采样器
-    if args.neigh_finder == "in":
-        train_ngh_finder = get_in_neighbor_finder(train_data, args.uniform)
-        full_ngh_finder = get_in_neighbor_finder(full_data, args.uniform)
-    else:
-        train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
-        full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
+    train_ngh_finder = get_diff_neighbor_finder(train_data, args.uniform, finder_type=args.neigh_finder)
+    full_ngh_finder = get_diff_neighbor_finder(full_data, args.uniform, finder_type=args.neigh_finder)
 
     # Initialize negative samplers
     train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
