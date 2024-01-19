@@ -110,11 +110,11 @@ class RandEdgeSampler(object):
 
 def get_diff_neighbor_finder(data, uniform, finder_type="all", max_node_idx=None):
     if finder_type == "in":
-        get_in_neighbor_finder(data, uniform, max_node_idx)
+        return get_in_neighbor_finder(data, uniform, max_node_idx)
     elif finder_type == "out":
-        get_out_neighbor_finder(data, uniform, max_node_idx)
+        return get_out_neighbor_finder(data, uniform, max_node_idx)
     else:
-        get_neighbor_finder(data, uniform, max_node_idx)
+        return get_neighbor_finder(data, uniform, max_node_idx)
 
 
 def get_neighbor_finder(data, uniform, max_node_idx=None):
