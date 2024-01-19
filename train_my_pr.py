@@ -11,7 +11,7 @@ from model.paper_recommendation import PrModel
 from model.tgn import TGN
 from evaluation.evaluation import eval_pr_edge_prediction
 from utils.logger import setup_logger
-from utils.utils import EarlyStopMonitor, RandEdgeSampler, get_neighbor_finder
+from utils.utils import EarlyStopMonitor, RandEdgeSampler, get_neighbor_finder, get_in_neighbor_finder
 from utils.data_processing import compute_time_statistics
 from pr.loader import load_data, load_nodes_meta
 
@@ -24,6 +24,8 @@ parser.add_argument('-d', '--data', type=str, help='Dataset name (eg. wikipedia 
                     default='aan')
 parser.add_argument('--bs', type=int, default=200, help='Batch_size')
 parser.add_argument('--prefix', type=str, default='pr', help='Prefix to name the checkpoints')
+parser.add_argument('--neigh_finder', type=str, default="all", choices=["all", "in", "out"],
+                    help='The type of neighbor finder')
 parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbors to sample')
 parser.add_argument('--n_head', type=int, default=2, help='Number of heads used in attention layer')
 parser.add_argument('--n_epoch', type=int, default=10, help='Number of epochs')
@@ -117,8 +119,12 @@ def main():
     _, _, node_timestamps = load_nodes_meta(DATA)
 
     # 初始化邻居采样器
-    train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
-    full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
+    if args.neigh_finder == "in":
+        train_ngh_finder = get_in_neighbor_finder(train_data, args.uniform)
+        full_ngh_finder = get_in_neighbor_finder(full_data, args.uniform)
+    else:
+        train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
+        full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
 
     # Initialize negative samplers
     train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
