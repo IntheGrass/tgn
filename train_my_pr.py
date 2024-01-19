@@ -185,12 +185,6 @@ def main():
 
             _, negatives_batch = train_rand_sampler.sample(size)  # 纯随机地选取源节点与目标节点，不区分是否是真实存在的边
 
-            neighbors, _, edge_times = train_ngh_finder.get_temporal_neighbor(sources_batch,
-                                                                              timestamps_batch,
-                                                                              n_neighbors=NUM_NEIGHBORS)
-            neighbors_torch = torch.from_numpy(neighbors).long().to(device)
-            print(torch.nonzero(torch.count_nonzero(neighbors_torch, dim=1)))
-
             with torch.no_grad():
                 pos_label = torch.ones(size, dtype=torch.float, device=device, requires_grad=False)
                 neg_label = torch.zeros(size, dtype=torch.float, device=device, requires_grad=False)
