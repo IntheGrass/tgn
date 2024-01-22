@@ -61,6 +61,7 @@ def get_model(device) -> PrModel:
 def eval_pr(model: PrModel, train_data: Data, test_data: Data):
     train_nodes = np.arange(1, max(train_data.unique_nodes)+1)
     test_set = build_test_dict(test_data)
+    test_keys = list(test_set.keys())
 
     batch_size = min(BATCH_SIZE, len(train_nodes))
     batch_num = math.ceil(len(train_nodes) / batch_size)
@@ -69,10 +70,10 @@ def eval_pr(model: PrModel, train_data: Data, test_data: Data):
 
     with torch.no_grad():
         model = model.eval()
-        total = TEST_SIZE if TEST_SIZE > 0 else len(test_set)
-        for i, test_node in tqdm(enumerate(test_set), total=total, desc="eval model"):
-            if i >= total:
-                break
+        if TEST_SIZE > 0:
+            test_keys = np.random.choice(test_keys, TEST_SIZE, replace=False)
+
+        for i, test_node in tqdm(enumerate(test_keys), total=len(test_keys), desc="eval model"):
             scores = []
             timestamp = test_set[test_node]["timestamp"]
             for k in range(batch_num):
