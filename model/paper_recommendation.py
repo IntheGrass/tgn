@@ -67,20 +67,22 @@ class PrModel(nn.Module, IPaperRecommendation):
         neg_graph_embedding = self.graph_embedding_layer.embedding_nodes(neg_nodes, edge_times, n_neighbors=n_neighbors)
         src_graph_embedding, dst_graph_embedding = self.graph_embedding_layer.compute_pair_edge_embedding(
             src_nodes, dst_nodes, edge_times, n_neighbors=n_neighbors)
-        graph_embedding = torch.cat([src_graph_embedding, dst_graph_embedding, neg_graph_embedding], dim=0)
+        graph_embedding = torch.cat([dst_graph_embedding, neg_graph_embedding], dim=0)
+
+        src_node_embedding = self.compute_text_embedding(src_nodes)
 
         if self.use_text:
             # 结合文本嵌入与图嵌入构建节点嵌入
-            nodes = np.concatenate([src_nodes, dst_nodes, neg_nodes])
+            nodes = np.concatenate([dst_nodes, neg_nodes])
             text_embedding = self.compute_text_embedding(nodes)
 
             node_embedding = self.compose_text_graph_embedding(text_embedding, graph_embedding)  # (3*batch_size, feat_dim)
         else:
             node_embedding = graph_embedding
 
-        src_node_embedding = node_embedding[:batch_size]
-        dst_node_embedding = node_embedding[batch_size:2 * batch_size]
-        neg_node_embedding = node_embedding[2 * batch_size:]
+        dst_node_embedding = node_embedding[:batch_size]
+        neg_node_embedding = node_embedding[batch_size:]
+
         # predict score
         score = self.affinity_score(torch.cat([src_node_embedding, src_node_embedding], dim=0),
                                     torch.cat([dst_node_embedding, neg_node_embedding])).squeeze(dim=0)  # 合并计算评分
@@ -97,11 +99,14 @@ class PrModel(nn.Module, IPaperRecommendation):
         # 预测时调用，不会影响memory
         assert len(src_nodes) == len(dst_nodes), "The size of src_nodes don't match dst_nodes"
         batch_size = len(src_nodes)
-        nodes = np.concatenate([src_nodes, dst_nodes])
-        cut_time_l = np.concatenate([edge_times, edge_times])
-
+        # nodes = np.concatenate([src_nodes, dst_nodes])
+        # cut_time_l = np.concatenate([edge_times, edge_times])
+        nodes = dst_nodes
+        cut_time_l = edge_times
 
         graph_embedding = self.graph_embedding_layer.embedding_nodes(nodes, cut_time_l, n_neighbors=n_neighbors)
+
+        src_node_embedding = self.compute_text_embedding(src_nodes)
 
         # 得到最终的节点嵌入
         if self.use_text:
@@ -112,8 +117,8 @@ class PrModel(nn.Module, IPaperRecommendation):
         else:
             node_embedding = graph_embedding
 
-        src_node_embedding = node_embedding[:batch_size]
-        dst_node_embedding = node_embedding[batch_size:]
+        # src_node_embedding = node_embedding[:batch_size]
+        dst_node_embedding = node_embedding
 
         score = self.affinity_score(src_node_embedding, dst_node_embedding).squeeze(dim=0)
 
