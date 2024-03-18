@@ -24,8 +24,8 @@ parser.add_argument('--n-epoch', type=int, default=10, help='Number of epochs')
 parser.add_argument('--prefix', type=str, default='mlp', help='Prefix to name the checkpoints')
 parser.add_argument('--feat-dim', type=int, default=768, help='Dimensions of the node')
 parser.add_argument('--lr', type=float, default=0.00005, help='Learning rate')
-parser.add_argument('--layer-type', type=str, help='The layer to calculate similarity. optional: merge, distance',
-                    default='merge')
+parser.add_argument('--layer-type', type=str,
+                    help='The layer to calculate similarity. optional: merge, distance, attn', default='mlp')
 parser.add_argument('--use-time', action='store_true', help='Whether to use time features as input')
 parser.add_argument('--use-time-type', type=str, help='how to use time features. optional: add, concat',
                     default='add')

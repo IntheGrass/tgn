@@ -2,11 +2,11 @@ import torch
 import numpy as np
 
 from model.time_encoding import TimeEncode
-from utils.utils import MergeLayer, DistanceLayer
+from utils.utils import MergeLayer, DistanceLayer, AttnScoreLayer
 
 
 class MlpPredictor(torch.nn.Module):
-    def __init__(self, feat_dim, node_features, device, layer_type="merge"):
+    def __init__(self, feat_dim, node_features, device, layer_type="mlp"):
         super(MlpPredictor, self).__init__()
         assert feat_dim == node_features.shape[1], "feat_dim don't match raw node feature dim"
         self.node_features = torch.from_numpy(node_features.astype(np.float32)).to(device)
@@ -35,7 +35,7 @@ class MlpPredictor(torch.nn.Module):
 
 
 class MlpTimePredictor(MlpPredictor):
-    def __init__(self, feat_dim, node_features, timestamps, device, layer_type="merge", time_type="add", time_dim=768):
+    def __init__(self, feat_dim, node_features, timestamps, device, layer_type="mlp", time_type="add", time_dim=768):
         super(MlpTimePredictor, self).__init__(feat_dim, node_features, device)
         self.timestamps = timestamps
         self.time_feature_dim = time_dim
@@ -73,11 +73,13 @@ class MlpTimePredictor(MlpPredictor):
         return time_features
 
 
-def get_score_layer(input_dim, feat_dim, layer_type="merge"):
+def get_score_layer(input_dim, hidden_dim, layer_type="mlp"):
     layer_type = layer_type.lower()
     if layer_type == "distance":
-        return DistanceLayer(input_dim, feat_dim)
-    elif layer_type == "merge":
-        return MergeLayer(input_dim, input_dim, feat_dim, 1)
+        return DistanceLayer(input_dim, hidden_dim)
+    elif layer_type == "mlp":
+        return MergeLayer(input_dim, input_dim, hidden_dim, 1)
+    elif layer_type == "attn":
+        return AttnScoreLayer(input_dim)
     else:
         raise Exception(f"unsupported layer type: {layer_type}")

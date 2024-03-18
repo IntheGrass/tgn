@@ -55,6 +55,34 @@ class DistanceLayer(torch.nn.Module):
         return distance
 
 
+class AttnScoreLayer(torch.nn.Module):
+    """
+    介绍: 基于注意力的预测层
+    """
+    def __init__(self, input_dim):
+        super().__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = self.input_dim
+
+        # Parameters for linear transformations
+        self.W_q = torch.nn.Linear(self.input_dim, self.hidden_dim)
+        self.W_k = torch.nn.Linear(self.input_dim, self.hidden_dim)
+
+        # init parameters
+        torch.nn.init.xavier_normal_(self.W_q.weight)
+        torch.nn.init.xavier_normal_(self.W_k.weight)
+
+    def forward(self, Q, K):
+        # Project Q and K to hidden space
+        Q_proj = self.W_q(Q)
+        K_proj = self.W_k(K)
+
+        # Compute attention scores using dot product
+        attention_scores = torch.bmm(Q_proj, K_proj.transpose(1, 2))
+
+        return attention_scores
+
+
 class EarlyStopMonitor(object):
     def __init__(self, max_round=3, higher_better=True, tolerance=1e-10):
         self.max_round = max_round
