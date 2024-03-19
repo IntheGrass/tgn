@@ -64,15 +64,25 @@ class AttnScoreLayer(torch.nn.Module):
         self.input_dim = input_dim
         self.hidden_dim = self.input_dim
 
+        self.fc1 = torch.nn.Linear(self.input_dim, self.input_dim)
+        self.fc2 = torch.nn.Linear(self.input_dim, self.input_dim)
+        self.act = torch.nn.ReLU()
+
         # Parameters for linear transformations
         self.W_q = torch.nn.Linear(self.input_dim, self.hidden_dim)
         self.W_k = torch.nn.Linear(self.input_dim, self.hidden_dim)
 
         # init parameters
+        # torch.nn.init.xavier_normal_(self.fc1)
+        # torch.nn.init.xavier_normal_(self.fc2)
         torch.nn.init.xavier_normal_(self.W_q.weight)
         torch.nn.init.xavier_normal_(self.W_k.weight)
 
     def forward(self, Q, K):
+        # 先经过一层全连接映射与激活
+        Q = self.act(self.fc1(Q))
+        K = self.act(self.fc2(K))
+
         # Project Q and K to hidden space
         Q_proj = self.W_q(Q)
         K_proj = self.W_k(K)
