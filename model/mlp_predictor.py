@@ -73,6 +73,30 @@ class MlpTimePredictor(MlpPredictor):
         return time_features
 
 
+class WeightedMlpAttnPredictor(MlpTimePredictor):
+    def __init__(self, feat_dim, node_features, timestamps, device):
+        super(WeightedMlpAttnPredictor, self).__init__(feat_dim, node_features, timestamps, device)
+        self.mlp_layer = get_score_layer(self.node_feature_dim, self.node_feature_dim, "mlp")
+        self.time_attn_layer = get_score_layer(self.time_feature_dim, self.time_feature_dim, "attn")
+
+        self.affinity_score = torch.nn.Linear(2, 1)
+
+    def forward(self, source_nodes, destination_nodes):
+        # 获取输入张量
+        src_features = self.node_features[source_nodes]
+        dst_features = self.node_features[destination_nodes]
+        src_time_features = self._calculate_timestamp_features(self.timestamps[source_nodes])
+        dst_time_features = self._calculate_timestamp_features(self.timestamps[destination_nodes])
+
+        # 计算预测评分
+        mlp_score = self.mlp_layer(src_features, dst_features)  # (n,1)
+        time_attn_score = self.time_attn_layer(src_time_features, dst_time_features)  # (n,1)
+        tmp_input = torch.cat((mlp_score, time_attn_score), dim=1)  # (n, 2)
+        score = self.affinity_score(tmp_input)  # (n, 1)
+
+        return score
+
+
 def get_score_layer(input_dim, hidden_dim, layer_type="mlp"):
     layer_type = layer_type.lower()
     if layer_type == "distance":

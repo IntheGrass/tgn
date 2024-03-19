@@ -88,9 +88,9 @@ class AttnScoreLayer(torch.nn.Module):
         K_proj = self.W_k(K)
 
         # Compute attention scores using dot product
-        attention_scores = torch.sum(Q_proj * K_proj, dim=1, keepdim=True)
+        attention_scores = torch.sum(Q_proj * K_proj, dim=1, keepdim=True)  # (n,1)
 
-        return attention_scores.squeeze()
+        return attention_scores
 
 
 class EarlyStopMonitor(object):

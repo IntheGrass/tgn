@@ -7,7 +7,7 @@ import torch
 import numpy as np
 from sklearn.metrics import average_precision_score, roc_auc_score
 
-from model.mlp_predictor import MlpPredictor, MlpTimePredictor
+from model.mlp_predictor import MlpPredictor, MlpTimePredictor, WeightedMlpAttnPredictor
 from pr.loader import load_data, load_nodes_meta
 from utils.logger import setup_logger
 from utils.utils import get_neighbor_finder, RandEdgeSampler
@@ -26,6 +26,7 @@ parser.add_argument('--feat-dim', type=int, default=768, help='Dimensions of the
 parser.add_argument('--lr', type=float, default=0.00005, help='Learning rate')
 parser.add_argument('--layer-type', type=str,
                     help='The layer to calculate similarity. optional: merge, distance, attn', default='mlp')
+parser.add_argument('--weighted-time', action='store_true', help='Whether to use weighted time attn score')
 parser.add_argument('--use-time', action='store_true', help='Whether to use time features as input')
 parser.add_argument('--use-time-type', type=str, help='how to use time features. optional: add, concat',
                     default='add')
@@ -100,7 +101,10 @@ def main():
     device_string = 'cuda:{}'.format(GPU) if torch.cuda.is_available() else 'cpu'
     device = torch.device(device_string)
 
-    if args.use_time:
+    if args.weighted_time:
+        logger.info(f"use predictor with weighted time score")
+        model = WeightedMlpAttnPredictor(FEAT_DIM, node_features, timestamps, device)
+    elif args.use_time:
         logger.info(f"use predictor with time: {args.use_time_type}")
         model = MlpTimePredictor(FEAT_DIM, node_features, timestamps, device, time_type=args.use_time_type,
                                  layer_type=args.layer_type)
