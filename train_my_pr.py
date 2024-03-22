@@ -116,7 +116,7 @@ def main():
 
     node_features, edge_features, full_data, train_data, val_data, test_data = load_data(DATA,
                                                                                          time_scale=args.time_scale)
-    _, _, node_timestamps = load_nodes_meta(DATA)
+    _, node_timestamps = load_nodes_meta(DATA)
 
     # 初始化邻居采样器
     train_ngh_finder = get_diff_neighbor_finder(train_data, args.uniform, finder_type=args.neigh_finder)

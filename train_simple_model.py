@@ -90,7 +90,7 @@ def main():
     logger = setup_logger()
 
     node_features, edge_features, full_data, train_data, val_data, test_data = load_data(DATA)
-    _, _, timestamps = load_nodes_meta(DATA)
+    _, timestamps = load_nodes_meta(DATA)
 
     # Initialize negative samplers
     train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
