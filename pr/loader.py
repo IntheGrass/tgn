@@ -92,7 +92,7 @@ def load_nodes_meta(dataset_name, data_dir="./data"):
     # pids = np.insert(pids, 0, "None")
     years = np.insert(years, 0, 0)
 
-    return node_ids, pids, years
+    return node_ids, years
 
 
 
