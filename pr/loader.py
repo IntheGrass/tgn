@@ -84,12 +84,12 @@ def load_nodes_meta(dataset_name, data_dir="./data"):
 
     # meta data
     node_ids = nodes_df.node_id.values
-    pids = nodes_df.pid.values
+    # pids = nodes_df.pid.values
     years = nodes_df.year.values
 
     # insert 0
     node_ids = np.insert(node_ids, 0, 0)
-    pids = np.insert(pids, 0, "None")
+    # pids = np.insert(pids, 0, "None")
     years = np.insert(years, 0, 0)
 
     return node_ids, pids, years
